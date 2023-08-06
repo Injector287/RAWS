@@ -1,7 +1,7 @@
 import pickle as b
 from getpass import getpass
 
-# PART-1 Login and User Creation
+# PART-1 User Creation and Login
 
 def newid():
     print("Creating New User...")
