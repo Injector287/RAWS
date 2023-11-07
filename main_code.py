@@ -48,26 +48,29 @@ cur=mydb.cursor()
 def opndb():
     cur.execute("create database if not exists RAWS;")
     cur.execute("use RAWS")
-    cur.execute("create table if not exists ResDet(Apt_No varchar(4) primary key NOT NULL,Block char(1),Name varchar(20) NOT NULL,ContactNo int NOT NULL,BloodGroup varchar(3),Occupation varchar(20))")
-    cur.execute("create table if not exists MtnDet(Apt_No varchar(4) primary key,Block char(1),Sq_Feet int,Fees int,Due_Date date,Status varchar(10))")
+    cur.execute("create table if not exists ResDet(Apt_No varchar(4) primary key NOT NULL,Block char(1),Sq_Feet int,Name varchar(20) NOT NULL,ContactNo int NOT NULL,BloodGroup varchar(3),Occupation varchar(20))")
     cur.execute("create table if not exists CompltDet(Complaint_ID varchar(50) Primary Key NOT NULL,Apt_No varchar(4) NOT NULL,Date_Lodged date,Complaint text,Status varchar(10))")
     mydb.commit()
 
 def Res_Details():
   #* Inputs resident details into the ResDet table.
-    print("1.Input\n2.Display\n3.Update\n4.Delete")
+    print("1.Input\n2.Display\n3.Update")
     choice=input("Choice: ")
     if choice=="1":    
         while True:
             apt_no = input("Enter apartment number: ")
             block = input("Enter block: ")
+            sq_feet = int(input("Enter square feet: "))
+            
             name = input("Enter name: ")
             contact_no = int(input("Enter contact number: "))
             blood_group = input("Enter blood group: ")
             occupation = input("Enter occupation: ")
-            cur.execute("insert into ResDet values ('{}','{}','{}',{},'{}','{}')".format(apt_no, block, name, contact_no, blood_group, occupation))
+            
+            cur.execute("insert into ResDet values ('{}','{}',{},'{}',{},'{}','{}')".format(apt_no, block,sq_feet,name, contact_no, blood_group, occupation))
             mydb.commit()
             con=input("Continue?(y/n):")
+            
             if con=='n':
                 break
 
@@ -75,7 +78,7 @@ def Res_Details():
         Enter_Aptno=input("Enter Apartment Number: ")
         cur.execute("select * from ResDet where Apt_No='{}'".format(Enter_Aptno))
         show_aptdet=cur.fetchone()
-        print("Apartment No:",show_aptdet[0],"\nBlock:",show_aptdet[1],"\nOwner's Details\nName:",show_aptdet[2],"\nContact No",show_aptdet[3],"\nBlood Group",show_aptdet[4],"\nOccupation No",show_aptdet[5])
+        print("Apartment No:",show_aptdet[0],"\nBlock:",show_aptdet[1],"\nSquare Feet:",show_aptdet[2],"\nOwner's Details\nName:",show_aptdet[3],"\nContact No",show_aptdet[4],"\nBlood Group",show_aptdet[5],"\nOccupation No",show_aptdet[6])
 
     elif choice=="3":
         Enter_Aptno=input("Enter Apartment Number: ")
@@ -86,16 +89,11 @@ def Res_Details():
         new_occup=input("Occupation: ")
         cur.execute("update ResDet set Name='{}',ContactNo={},BloodGroup='{}',Occupation='{}' where Apt_No='{}'".format(new_name,new_contct,new_bldgrp,new_occup,Enter_Aptno))
         mydb.commit()
-    
-    elif choice=="4":
-        Enter_Aptno=input("Enter Apartment Number: ")
-        cur.execute("Delete from ResDet where Apt_No='{}'".format(Enter_Aptno,Enter_Aptno))
-        mydb.commit()
 
 def Complaint():
   #* Lodges a complaint into the CompltDet table.
 
-    choice = input("Choose one of the following:\n1. Lodge a complaint\n2. View existing complaints\n3. Update an existing complaint\n4. Delete an existing complaint\n 5.Update Status of an existing complaint\n")
+    choice = input("Choose one of the following:\n1. Lodge a complaint\n2. View existing complaints\n3. Update an existing complaint\n4. Delete an existing complaint\n5.Update Status of an existing complaint\n")
 
     if choice == "1":
         # Lodge a complaint
@@ -127,7 +125,7 @@ def Complaint():
         complaint_id = input("Enter complaint ID: ")
         new_complaint = input("Enter new complaint: ")
 
-        cur.execute("update CompltDet set Complaint = {} where Complaint_ID = {}", (new_complaint, complaint_id))
+        cur.execute("update CompltDet set Complaint = {} where Complaint_ID = {}".format(new_complaint, complaint_id))
         mydb.commit()
         print("Complaint updated successfully!")
 
@@ -135,7 +133,7 @@ def Complaint():
         # Delete an existing complaint
         complaint_id = input("Enter complaint ID: ")
 
-        cur.execute("delete from CompltDet where Complaint_ID = '{}'".format(complaint_id,))
+        cur.execute("delete from CompltDet where Complaint_ID = '{}'".format(complaint_id))
         mydb.commit()
         print("Complaint deleted successfully!")
 
@@ -153,39 +151,41 @@ def Complaint():
         print("Invalid choice.")
 
 def Maintenance():
+
     #* Manages maintenance details in the MtnDet table.
 
-    choice = input("Choose one of the following:\n1. Input maintenance details\n2. Update maintenance details via apartment\n3. Search maintenance details via status\n4. Delete maintenance details via apartment\n")
+    choice = input("Choose one of the following:\n1. Input maintenance details\n2. Update maintenance details\n3. Search maintenance details\n4. Delete maintenance details via apartment\n")
 
     if choice == "1":
         # Input maintenance details
-        apt_no = input("Enter apartment number: ")
-        sq_feet = int(input("Enter square feet: "))
-        fees = int(input("Enter fees: "))
-        due_date = input("Enter due date: ")
-        status = "Unpaid"
+        cur.execute("drop table if exists MtnDet")
+        cur.execute("create table MtnDet as select Apt_No,Sq_Feet from ResDet")
+        cur.execute("alter table MtnDet add column Due_Date date,add column Fees int,add column Status varchar(20)")
+        
+        Due_date=input("Enter Common Due Date:")
+        CPSF=int(input("Enter Cost Per Square Feet:"))
+        status='Unpaid'
 
-        cur.execute("insert into MtnDet values ('{}',{},{},'{}','{}')".format(apt_no, sq_feet, fees, due_date, status))
+        cur.execute("update MtnDet set Due_Date='{}',Fees=Sq_Feet*{},Status='{}'".format(Due_date,CPSF,status))
         mydb.commit()
         print("Maintenance details input successfully!")
 
     elif choice == "2":
-        # Update maintenance details via apartment
+        # Update maintenance details
         apt_no = input("Enter apartment number: ")
-
-        new_sq_feet = input("Enter new square feet: ")
         new_fees = input("Enter new fees: ")
         new_due_date = input("Enter new due date: ")
+        new_status=input("Enter Status:")
 
-        cur.execute("update MtnDet set Sq_Feet = ?, Fees = ?, Due_Date = ? where Apt_No = ?", (new_sq_feet, new_fees, new_due_date, apt_no))
+        cur.execute("update MtnDet set Fees = '{}', Due_Date = '{}', Status = '{}' where Apt_No = '{}'".format(new_fees, new_due_date,new_status,apt_no))
         mydb.commit()
         print("Maintenance details updated successfully!")
 
     elif choice == "3":
-        # Search maintenance details via status
+        # Search maintenance details
         status = input("Enter status: ")
 
-        cur.execute("select * from MtnDet where Status = '{}'".format(status,))
+        cur.execute("select * from MtnDet where Status = '{}'".format(status))
         rows = cur.fetchall()
 
         if not rows:
@@ -193,10 +193,10 @@ def Maintenance():
         else:
             print("Maintenance details:")
         for row in rows:
-            print("Apartment No: {} | Square Feet: {} | Fees: {} | Due Date: {} | Status: {}".format(row[0], row[1], row[2], row[3], row[4]))
+            print("Apartment No: {} | Square Feet: {} | Due Date: {} | Fees: {} | Status: {}".format(row[0], row[1], row[2], row[3], row[4]))
 
     elif choice == "4":
-        # Delete maintenance details via apartment
+        # Delete maintenance details
         apt_no = input("Enter apartment number: ")
 
         cur.execute("delete from MtnDet where Apt_No = '{}'".format(apt_no))
@@ -209,7 +209,7 @@ def Maintenance():
 def inp():
     while True:
         print("Welcome to Resident Association Welfare System")
-        print("1.Input Residents' Details\n2.Lodge a Complaint\n3.Manage Maintanence\n4.Exit")
+        print("1. Flat and Resident Details\n2. Complaints\n3. Maintanence\n4. Exit")
         choice = input("Enter your choice: ")
 
         if choice == "1":
