@@ -1,16 +1,20 @@
+
+#* All Import Statements
 import pickle as b
 from getpass import getpass
 import mysql.connector as m
-from datetime import date
+from datetime import date,datetime 
 from uuid import uuid4 as uid
 import time
 import sys
 
+#* Connecting Python to MySQL
 mydb=m.connect(host="localhost",user="root",password="root")
 cur=mydb.cursor()
 
 usn=""
 
+#* Creating Databases
 def opndb():
     dbname=str(usn)+"_raws"
     cur.execute("create database if not exists {}".format(dbname))
@@ -23,7 +27,8 @@ def credits():
     print("Thank You for Your Delightful support")
     print("A Shyaam and Team Project")
     sys.exit()
-    
+
+#* The Main Framework of the Program    
 def Home_Screen():
 
     def Res_Details():
@@ -81,7 +86,7 @@ def Home_Screen():
                 mydb.commit()    
 
         print("---------------------------------------")
-        choice=input("1. Input\n2. Display\n3. Update\n4. Back\n")
+        choice=input("Flat and Residential Details\nChoose one of the following:\n1. Input\n2. Display\n3. Update\n4. Back\n")
         if choice=="1":    
             input_resdet()
         elif choice=="2":  
@@ -93,8 +98,8 @@ def Home_Screen():
         else:
             print("Invalid choice")
 
+    #* Maintains a complaint into the CompltDet table.
     def Complaint():
-    #* Lodges a complaint into the CompltDet table.
 
         def check_complaint_exists(complaint_id):
             cur.execute("select count(*) from CompltDet where Complaint_ID = '{}'".format(complaint_id))
@@ -178,7 +183,7 @@ def Home_Screen():
             print("Complaint status updated successfully!")
 
         print("---------------------------------------")
-        choice = input("Choose one of the following:\n1. Lodge a complaint\n2. View existing complaints\n3. Update an existing complaint\n4. Delete an existing complaint\n5. Update Status of an existing complaint\n6. Back\n")
+        choice = input("Complaint Management\nChoose one of the following:\n1. Lodge a complaint\n2. View existing complaints\n3. Update an existing complaint\n4. Delete an existing complaint\n5. Update Status of an existing complaint\n6. Back\n")
 
         if choice == "1":
             register_complaint() 
@@ -195,12 +200,11 @@ def Home_Screen():
         else:
             print("Invalid choice.")
 
+    #* Manages maintenance details in the MtnDet table.
     def Maintenance():
 
-        #* Manages maintenance details in the MtnDet table.
-
         print("---------------------------------------")
-        choice = input("Choose one of the following:\n1. Input\n2. Update\n3. Search\n4. Delete\n5. Back\n")
+        choice = input("Maintenance Editor\nChoose one of the following:\n1. Input\n2. Update\n3. Search\n4. Delete\n5. Back\n")
 
         if choice == "1":
             # Input maintenance details
@@ -209,6 +213,10 @@ def Home_Screen():
             cur.execute("alter table MtnDet add column Due_Date date,add column Fees int,add column Status varchar(20)")
             
             Due_date=input("Enter Common Due Date:")
+            if datetime.strptime(Due_date,"%Y/%m/%d")<datetime.now():
+                print("Enter a Later Date")
+                Maintenance()
+
             CPSF=int(input("Enter Cost Per Square Feet:"))
             status='Unpaid'
 
@@ -271,7 +279,7 @@ def Home_Screen():
         else:
             print("Invalid choice. Please try again.")
         
-
+#* Login System
 def login():
 
     def newid():
